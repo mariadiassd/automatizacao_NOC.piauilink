@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <title>Automatização NOC - Piauí Link</title>
+          <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+        <style>
+          body {
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+            background: url('fundo.jpg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            padding: 30px;
+          }
+      
+          .container {
+            background: rgba(131, 138, 162, 0.615);
+            border-radius: 15px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            border-top: 6px solid #002a49;
+          }
+      
+          .tabs {
+            display: flex;
+          }
+      
+          .tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            background: #84a1d7df;
+            border-bottom: 3px solid transparent;
+            font-weight: bold;
+            transition: background 0.3s;
+          }
+      
+          .tab:hover {
+            background: #b3d9ff;
+          }
+      
+          .tab.active {
+            background: #7e90b0d0;
+            border-bottom: 3px solid #062a45;
+          }
+      
+          .tab-content {
+            display: none;
+            padding: 20px 30px 30px;
+          }
+      
+          .tab-content.active {
+            display: block;
+          }
+      
+          label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #ffffff;
+          }
+      
+          input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(241, 241, 241, 0.501);
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-top: 5px;
+          }
+      
+          textarea {
+            resize: vertical;
+          }
+      
+          button {
+            width: 100%;
+            padding: 12px;
+            background-color: #112b4d;
+            color: rgba(255, 255, 255, 0.853);
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+          }
+      
+          button:hover {
+            background-color: hsl(205, 85%, 11%);
+          }
+      
+          #resultado, #resultadoProtocolo, #resultadoPlantao {
+            margin-top: 20px;
+            font-size: 0.95rem;
+            color: #000000;
+            background: #ffffff6e;
+            padding: 15px;
+            border-left: 5px solid #007acc;
+            border-radius: 8px;
+            white-space: pre-wrap;
+          }
+      
+          .form-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+          }
+      
+          .form-group input,
+          .form-group button {
+            flex: 1;
+          }
+        </style>
+</head>
+<body>
+  <div class="container">
+    <div class="tabs">
+      <div class="tab active" onclick="abrirAba('formulario')">Formulário de protocolo</div>
+      <div class="tab" onclick="abrirAba('localizacao')">Localização Técnica</div>
+      <div class="tab" onclick="abrirAba('plantao')">Passagem de Plantão</div>
+      <div class="tab" onclick="showTab('reporte')">📊 Reporte Diário</div>
+    </div>
+
+    <div id="formulario" class="tab-content active">
+      <h2>Formulário de Solicitação</h2>
+      <label>Protocolo:</label>
+      <input type="text" id="protocolo">
+      <label>Nível de prioridade:</label>
+      <select id="prioridade">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+      </select>
+      <label>Resumo Solicitação (MOTIVO):</label>
+      <textarea id="resumo"></textarea>
+      <label>Local:</label>
+      <input type="text" id="local">
+      <label>Cidade:</label>
+      <input type="text" id="cidade">
+      <label>Coordenadas do local:</label>
+      <input type="text" id="coordenadas">
+      <label>Link Maps:</label>
+      <input type="text" id="maps">
+      <label>CTO/CEO:</label>
+      <input type="text" id="cto">
+      <label>Coordenada CTO/CEO:</label>
+      <input type="text" id="coord_cto">
+      <label>Responsável local (nome/telefone):</label>
+      <input type="text" id="responsavel">
+      <label>Tipo da Rede:</label>
+      <select id="rede">
+        <option value="P2P">P2P</option>
+        <option value="GPON">GPON</option>
+      </select>
+      <label>Tipo de Cabo:</label>
+      <input type="text" id="cabo">
+      <button onclick="gerarTexto()">Gerar e Copiar</button>
+      <div id="resultadoProtocolo"></div>
+    </div>
+
+    <div id="localizacao" class="tab-content">
+      <h2>Equipe Técnica Próxima</h2>
+      <div class="form-group">
+        <input type="text" id="cidadeInput" placeholder="Digite uma cidade do Piauí" oninput="sugerirCidades()" onkeydown="if(event.key==='Enter') buscarCidadeMaisProxima()">
+        <button onclick="buscarCidadeMaisProxima()">Buscar</button>
+      </div>
+      <ul id="sugestoes" style="list-style:none; padding-left:0;"></ul>
+      <div id="resultado"></div>
+    </div>
+
+    <div id="plantao" class="tab-content">
+      <h2>Passagem de Plantão</h2>
+      <label>Data:</label>
+      <input type="text" id="dataPlantao" readonly>
+      <label>Turno:</label>
+      <select id="turnoPlantao">
+        <option value="Dia">Dia</option>
+        <option value="Noite">Noite</option>
+      </select>
+      <hr>
+      <div id="camposPlantao"></div>
+      <button onclick="gerarPassagem()">Gerar Passagem e Copiar</button>
+      <div id="resultadoPlantao"></div>
+    </div>
+  </div>
+
+  <script>
+    function abrirAba(id) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      event.target.classList.add('active');
+
+      if (id === 'plantao') criarCamposPlantao();
+    }
+
+    function gerarTexto() {
+      const texto = `
+⭕*Protocolo:* ${document.getElementById('protocolo').value}
+⚠️*Nível de prioridade:* ${document.getElementById('prioridade').value}
+💻*Setor Solicitante:* NOC
+💬*Resumo Solicitação MOTIVO:* ${document.getElementById('resumo').value}
+📍Local: ${document.getElementById('local').value}
+🏙Cidade: ${document.getElementById('cidade').value}
+🚩Coordenadas do local: ${document.getElementById('coordenadas').value}
+🚩Link Maps: ${document.getElementById('maps').value}
+📪CTO/CEO: ${document.getElementById('cto').value}
+🚩Coordenada CTO/CEO: ${document.getElementById('coord_cto').value}
+Responsável local (nome/telefone): ${document.getElementById('responsavel').value}
+Tipo da Rede (P2P/GPON): ${document.getElementById('rede').value}
+Tipo de Cabo: ${document.getElementById('cabo').value}
+      `.trim();
+
+      const resultado = document.getElementById('resultadoProtocolo');
+      resultado.textContent = texto;
+      navigator.clipboard.writeText(texto).then(() => {
+        alert("Texto copiado para a área de transferência!");
+      });
+    }
+
+    const cidadesTecnicas = {
+      "Bom Jesus": [-9.0713, -44.3594],
+      "Corrente": [-10.4333, -45.1633],
+      "Esperantina": [-3.8889, -42.2333],
+      "Floriano": [-6.7715, -43.0243],
+      "Parnaíba": [-2.905, -41.7754],
+      "Picos": [-7.0767, -41.4677],
+      "Piripiri": [-4.2719, -41.7717],
+      "São Raimundo Nonato": [-9.0123, -42.6984],
+      "Teresina": [-5.0892, -42.8016],
+      "Uruçuí": [-7.2394, -44.5575]
+    };
+
+    function sugerirCidades() {
+      const input = document.getElementById('cidadeInput').value.toLowerCase();
+      const lista = document.getElementById('sugestoes');
+      lista.innerHTML = '';
+      if (!input) return;
+
+      Object.keys(cidadesTecnicas).forEach(nome => {
+        if (nome.toLowerCase().startsWith(input)) {
+          const li = document.createElement('li');
+          li.textContent = nome;
+          li.style.cursor = 'pointer';
+          li.onclick = () => {
+            document.getElementById('cidadeInput').value = nome;
+            lista.innerHTML = '';
+          };
+          lista.appendChild(li);
+        }
+      });
+    }
+
+    async function buscarCidadeMaisProxima() {
+      const cidade = document.getElementById('cidadeInput').value.trim();
+      const resultado = document.getElementById('resultado');
+      resultado.textContent = "";
+      document.getElementById('sugestoes').innerHTML = "";
+
+      if (!cidade) {
+        resultado.textContent = "Por favor, insira uma cidade.";
+        return;
+      }
+
+      const cidadeCapitalizada = cidade.charAt(0).toUpperCase() + cidade.slice(1).toLowerCase();
+      if (cidadesTecnicas.hasOwnProperty(cidadeCapitalizada)) {
+        resultado.innerHTML = `<p><strong>Essa cidade possui equipe técnica in loco!</strong></p>`;
+        return;
+      }
+
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${cidade}, Piauí, Brasil`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!data || data.length === 0) {
+          resultado.textContent = "Cidade não encontrada.";
+          return;
+        }
+
+        const { lat, lon } = data[0];
+        const distancia = (lat1, lon1, lat2, lon2) => {
+          const toRad = deg => deg * Math.PI / 180;
+          const R = 6371;
+          const dLat = toRad(lat2 - lat1);
+          const dLon = toRad(lon2 - lon1);
+          const a = Math.sin(dLat / 2) ** 2 +
+                    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                    Math.sin(dLon / 2) ** 2;
+          return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        };
+
+        let cidadeMaisProxima = "";
+        let menorDistancia = Infinity;
+
+        for (const [nome, [latC, lonC]] of Object.entries(cidadesTecnicas)) {
+          const d = distancia(parseFloat(lat), parseFloat(lon), latC, lonC);
+          if (d < menorDistancia) {
+            menorDistancia = d;
+            cidadeMaisProxima = nome;
+          }
+        }
+
+        const distanciaKm = menorDistancia.toFixed(2);
+        const tempoHoras = (menorDistancia / 70).toFixed(2);
+        const tempoLegivel = tempoHoras < 1 
+          ? `${Math.round(tempoHoras * 60)} minutos` 
+          : `${Math.floor(tempoHoras)}h ${Math.round((tempoHoras % 1) * 60)}min`;
+
+        resultado.innerHTML = `
+          <p><strong>Base mais próxima:</strong> ${cidadeMaisProxima}</p>
+          <p><strong>Distância:</strong> ${distanciaKm} km</p>
+          <p><strong>Tempo estimado:</strong> ${tempoLegivel}</p>
+        `;
+
+      } catch (error) {
+        resultado.textContent = "Erro ao buscar dados. Verifique sua conexão.";
+      }
+    }
+
+    const setores = [
+      "BACKBONE",
+      "OLT'S, RAMAIS E DATACOM",
+      "PAG´S",
+      "PAP´S",
+      "RETIFICADORAS",
+      "TJ",
+      "CLIENTES"
+    ];
+
+    function criarCamposPlantao() {
+      const container = document.getElementById('camposPlantao');
+      container.innerHTML = '';
+
+      setores.forEach(setor => {
+        const div = document.createElement('div');
+        div.style.marginBottom = '20px';
+
+        const label = document.createElement('label');
+        label.textContent = `Atualizações sobre ${setor}:`;
+        label.style.display = 'block';
+        label.style.marginTop = '15px';
+
+        const select = document.createElement('select');
+        select.onchange = function () {
+          textarea.disabled = this.value === "nao";
+          textarea.value = this.value === "nao" ? "Sem alertas" : "";
+        };
+
+        const option1 = new Option("Sem alertas", "nao");
+        const option2 = new Option("Tem alertas", "sim");
+        select.append(option1, option2);
+
+        const textarea = document.createElement('textarea');
+        textarea.rows = 3;
+        textarea.style.marginTop = '10px';
+        textarea.disabled = true;
+        textarea.value = "Sem alertas";
+
+        div.append(label, select, textarea);
+        container.appendChild(div);
+      });
+    }
+
+    function gerarPassagem() {
+      const data = document.getElementById('dataPlantao').value;
+      const turno = document.getElementById('turnoPlantao').value;
+      const divs = document.getElementById('camposPlantao').children;
+
+      let resultado = `📅 DATA: ${data} | TURNO: ${turno.toUpperCase()}\n`;
+
+      setores.forEach((setor, index) => {
+        const textarea = divs[index].querySelector('textarea');
+        resultado += `\n---------------------------------${setor}------------------------------------ \n${textarea.value.trim()}\n`;
+      });
+
+      document.getElementById('resultadoPlantao').textContent = resultado;
+      navigator.clipboard.writeText(resultado).then(() => {
+        alert("Passagem de plantão copiada para a área de transferência!");
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const hoje = new Date();
+      const dataFormatada = hoje.toLocaleDateString('pt-BR');
+      document.getElementById('dataPlantao').value = dataFormatada;
+      criarCamposPlantao();
+    });
+
+          function showTab(id) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelector(`.tab[onclick="showTab('${id}')"]`).classList.add('active');
+    }
+
+    function addRow() {
+      const tbody = document.getElementById('reporteTable').querySelector('tbody');
+      const row = tbody.insertRow();
+      const columns = ['DATA','SIGLA','CIDADE','TIPO','PARCEIRO','PROTOCOLO','DESCRIÇÃO','TÉCNICO','ON-LINE?','DT/HR DOWN'];
+      columns.forEach((col, i) => {
+        const cell = row.insertCell(i);
+        if (col === 'ON-LINE?') {
+          const select = document.createElement('select');
+          ['Não', 'Sim'].forEach(val => {
+            const option = document.createElement('option');
+            option.value = val;
+            option.textContent = val;
+            select.appendChild(option);
+          });
+          select.onchange = function() {
+            if (this.value === 'Sim') row.style.display = 'none';
+          };
+          cell.appendChild(select);
+        } else {
+          const input = document.createElement('input');
+          input.type = 'text';
+          cell.appendChild(input);
+        }
+      });
+    }
+
+    function toggleOcultos() {
+      const rows = document.querySelectorAll('#reporteTable tbody tr');
+      rows.forEach(row => {
+        const status = row.cells[8].querySelector('select')?.value;
+        if (status === 'Sim') {
+          row.style.display = (row.style.display === 'none') ? '' : 'none';
+        }
+      });
+    }
+
+    function copyTableAsImage() {
+      const table = document.getElementById('reporteTable');
+      html2canvas(table).then(canvas => {
+        canvas.toBlob(blob => {
+          navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          alert('Tabela copiada como imagem!');
+        });
+      });
+    }
+  </script>
+</body>
+</html>
