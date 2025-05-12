@@ -3,7 +3,6 @@
     <head>
         <meta charset="UTF-8">
         <title>Automatização NOC - Piauí Link</title>
-          <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
         <style>
           body {
             margin: 0;
@@ -123,7 +122,6 @@
       <div class="tab active" onclick="abrirAba('formulario')">Formulário de protocolo</div>
       <div class="tab" onclick="abrirAba('localizacao')">Localização Técnica</div>
       <div class="tab" onclick="abrirAba('plantao')">Passagem de Plantão</div>
-      <div class="tab" onclick="showTab('reporte')">📊 Reporte Diário</div>
     </div>
 
     <div id="formulario" class="tab-content active">
@@ -144,7 +142,7 @@
       <label>Cidade:</label>
       <input type="text" id="cidade">
       <label>Coordenadas do local:</label>
-      <input type="text" id="coordenadas">
+      <input type="text" id="coordenadas" oninput="preencherLinkMaps()">
       <label>Link Maps:</label>
       <input type="text" id="maps">
       <label>CTO/CEO:</label>
@@ -222,7 +220,18 @@ Tipo de Cabo: ${document.getElementById('cabo').value}
       navigator.clipboard.writeText(texto).then(() => {
         alert("Texto copiado para a área de transferência!");
       });
-    }
+      
+      }
+      function preencherLinkMaps() {
+        const coordenadas = document.getElementById('coordenadas').value.trim();
+        const mapsInput = document.getElementById('maps');
+          if (/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(coordenadas)) {
+          const link = `https://www.google.com/maps?q=${coordenadas.replace(/\s+/g, '')}`;
+          mapsInput.value = link;
+          } else {
+         mapsInput.value = ''; 
+                  }
+                                   }
 
     const cidadesTecnicas = {
       "Bom Jesus": [-9.0713, -44.3594],
@@ -399,52 +408,6 @@ Tipo de Cabo: ${document.getElementById('cabo').value}
       document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       document.querySelector(`.tab[onclick="showTab('${id}')"]`).classList.add('active');
-    }
-
-    function addRow() {
-      const tbody = document.getElementById('reporteTable').querySelector('tbody');
-      const row = tbody.insertRow();
-      const columns = ['DATA','SIGLA','CIDADE','TIPO','PARCEIRO','PROTOCOLO','DESCRIÇÃO','TÉCNICO','ON-LINE?','DT/HR DOWN'];
-      columns.forEach((col, i) => {
-        const cell = row.insertCell(i);
-        if (col === 'ON-LINE?') {
-          const select = document.createElement('select');
-          ['Não', 'Sim'].forEach(val => {
-            const option = document.createElement('option');
-            option.value = val;
-            option.textContent = val;
-            select.appendChild(option);
-          });
-          select.onchange = function() {
-            if (this.value === 'Sim') row.style.display = 'none';
-          };
-          cell.appendChild(select);
-        } else {
-          const input = document.createElement('input');
-          input.type = 'text';
-          cell.appendChild(input);
-        }
-      });
-    }
-
-    function toggleOcultos() {
-      const rows = document.querySelectorAll('#reporteTable tbody tr');
-      rows.forEach(row => {
-        const status = row.cells[8].querySelector('select')?.value;
-        if (status === 'Sim') {
-          row.style.display = (row.style.display === 'none') ? '' : 'none';
-        }
-      });
-    }
-
-    function copyTableAsImage() {
-      const table = document.getElementById('reporteTable');
-      html2canvas(table).then(canvas => {
-        canvas.toBlob(blob => {
-          navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-          alert('Tabela copiada como imagem!');
-        });
-      });
     }
   </script>
 </body>
