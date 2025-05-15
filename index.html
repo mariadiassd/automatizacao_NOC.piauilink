@@ -3,6 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <title>Automatização NOC - Piauí Link</title>
+          <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
         <style>
           body {
             margin: 0;
@@ -122,6 +123,7 @@
       <div class="tab active" onclick="abrirAba('formulario')">Formulário de protocolo</div>
       <div class="tab" onclick="abrirAba('localizacao')">Localização Técnica</div>
       <div class="tab" onclick="abrirAba('plantao')">Passagem de Plantão</div>
+      <div class="tab" onclick="showTab('reporte')">📊 Reporte Diário</div>
     </div>
 
     <div id="formulario" class="tab-content active">
@@ -186,6 +188,31 @@
       <button onclick="gerarPassagem()">Gerar Passagem e Copiar</button>
       <div id="resultadoPlantao"></div>
     </div>
+    <div id="reporte" class="tab-content">
+  <h2>Reporte Diário</h2>
+  <button onclick="addRow()">Adicionar Linha</button>
+  <button onclick="toggleOcultos()">Mostrar/Ocultar ON-LINE</button>
+  <button onclick="copyTableAsImage()">Copiar como Imagem</button>
+  <table id="reporteTable" border="1" style="width:100%; margin-top:20px;">
+    <thead>
+      <tr>
+        <th>DATA</th>
+        <th>SIGLA</th>
+        <th>CIDADE</th>
+        <th>TIPO</th>
+        <th>PARCEIRO</th>
+        <th>PROTOCOLO</th>
+        <th>TÉCNICO</th>
+        <th>ON-LINE?</th>
+        <th>DT/HR DOWN</th>
+        <th>DESCRIÇÃO</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</div>
+    
   </div>
 
   <script>
@@ -408,6 +435,62 @@ Tipo de Cabo: ${document.getElementById('cabo').value}
       document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       document.querySelector(`.tab[onclick="showTab('${id}')"]`).classList.add('active');
+    }
+
+    function addRow() {
+      const tbody = document.getElementById('reporteTable').querySelector('tbody');
+      const row = tbody.insertRow();
+      const columns = ['DATA','SIGLA','CIDADE','TIPO','PARCEIRO','PROTOCOLO','TÉCNICO','ON-LINE?','DT/HR DOWN'];
+
+columns.forEach((col, i) => {
+  const cell = row.insertCell(i);
+  if (col === 'ON-LINE?') {
+    const select = document.createElement('select');
+    ['Não', 'Sim'].forEach(val => {
+      const option = document.createElement('option');
+      option.value = val;
+      option.textContent = val;
+      select.appendChild(option);
+    });
+    select.onchange = function () {
+      if (this.value === 'Sim') row.style.display = 'none';
+    };
+    cell.appendChild(select);
+  } else if (col === 'DESCRIÇÃO') {
+    const textarea = document.createElement('textarea');
+    textarea.style.width = '100%';
+    textarea.rows = 2;
+    textarea.oninput = function () {
+      this.style.height = 'auto';
+      this.style.height = this.scrollHeight + 'px';
+    };
+    cell.appendChild(textarea);
+  } else {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.style.width = '100%';
+    cell.appendChild(input);
+  }
+});
+
+    function toggleOcultos() {
+      const rows = document.querySelectorAll('#reporteTable tbody tr');
+      rows.forEach(row => {
+        const status = row.cells[8].querySelector('select')?.value;
+        if (status === 'Sim') {
+          row.style.display = (row.style.display === 'none') ? '' : 'none';
+        }
+      });
+    }
+
+    function copyTableAsImage() {
+      const table = document.getElementById('reporteTable');
+      html2canvas(table).then(canvas => {
+        canvas.toBlob(blob => {
+          navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          alert('Tabela copiada como imagem!');
+        });
+      });
     }
   </script>
 </body>
